@@ -1,0 +1,48 @@
+namespace: aidp-helm
+
+postgres:
+  enabled: true
+  image: postgres
+  tag: "16"
+  servicePort: 5432
+  username: mlflow
+  password: mlflowpass
+  database: mlflow
+  storage: 2Gi
+
+minio:
+  enabled: true
+  image: minio/minio
+  tag: "RELEASE.2024-06-11T03-13-30Z"
+  mcImage: minio/mc
+  mcTag: latest
+  rootUser: minio
+  rootPassword: minio12345
+  apiPort: 9000
+  consolePort: 9001
+  storage: 5Gi
+  bucketName: mlflow
+
+mlflow:
+  enabled: true
+  image: ghcr.io/mlflow/mlflow
+  tag: "v2.14.1"
+  servicePort: 5000
+  artifactRoot: s3://mlflow/
+  s3EndpointUrl: http://minio:9000
+  backendStoreUri: postgresql://mlflow:mlflowpass@postgres:5432/mlflow
+
+modelApi:
+  enabled: true
+  image: ghcr.io/Raptorex65/aidp-model-api
+  tag: latest
+  imagePullPolicy: IfNotPresent
+  servicePort: 8080
+  modelName: iris-classifier
+  mlflowTrackingUri: http://mlflow:5000
+  mlflowS3EndpointUrl: http://minio:9000
+
+ingress:
+  enabled: true
+  className: nginx
+  host: aidp.helm.local

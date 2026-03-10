@@ -1,0 +1,66 @@
+{{- if .Values.modelApi.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-api
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: model-api
+  template:
+    metadata:
+      labels:
+        app: model-api
+    spec:
+      containers:
+        - name: model-api
+          image: "{{ .Values.modelApi.image }}:{{ .Values.modelApi.tag }}"
+          imagePullPolicy: {{ .Values.modelApi.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.modelApi.servicePort }}
+          env:
+            - name: MLFLOW_TRACKING_URI
+              value: {{ .Values.modelApi.mlflowTrackingUri | quote }}
+            - name: MODEL_NAME
+              value: {{ .Values.modelApi.modelName | quote }}
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: {{ .Values.modelApi.mlflowS3EndpointUrl | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.modelApi.servicePort }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.modelApi.servicePort }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-api
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: model-api
+  ports:
+    - name: http
+      port: {{ .Values.modelApi.servicePort }}
+      targetPort: {{ .Values.modelApi.servicePort }}
+  type: ClusterIP
+{{- end }}

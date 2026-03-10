@@ -1,0 +1,80 @@
+{{- if .Values.mlflow.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mlflow-secret
+  namespace: {{ .Values.namespace }}
+type: Opaque
+stringData:
+  AWS_ACCESS_KEY_ID: {{ .Values.minio.rootUser | quote }}
+  AWS_SECRET_ACCESS_KEY: {{ .Values.minio.rootPassword | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: "{{ .Values.mlflow.image }}:{{ .Values.mlflow.tag }}"
+          ports:
+            - containerPort: {{ .Values.mlflow.servicePort }}
+          env:
+            - name: MLFLOW_S3_ENDPOINT_URL
+              value: {{ .Values.mlflow.s3EndpointUrl | quote }}
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-secret
+                  key: AWS_ACCESS_KEY_ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mlflow-secret
+                  key: AWS_SECRET_ACCESS_KEY
+          command: ["/bin/sh", "-c"]
+          args:
+            - >
+              pip install --no-cache-dir psycopg2-binary==2.9.9 &&
+              mlflow server
+              --host 0.0.0.0
+              --port {{ .Values.mlflow.servicePort }}
+              --backend-store-uri "{{ .Values.mlflow.backendStoreUri }}"
+              --default-artifact-root "{{ .Values.mlflow.artifactRoot }}"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.mlflow.servicePort }}
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.mlflow.servicePort }}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mlflow
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: mlflow
+  ports:
+    - name: http
+      port: {{ .Values.mlflow.servicePort }}
+      targetPort: {{ .Values.mlflow.servicePort }}
+  type: ClusterIP
+{{- end }}

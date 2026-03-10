@@ -1,0 +1,126 @@
+{{- if .Values.minio.enabled }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-secret
+  namespace: {{ .Values.Namespace}}
+type: Opaque
+stringData:
+  MINIO_ROOT_USER: {{ .Values.minio.rootUser}}
+  MINIO_ROOT_PASSWORD: {{ .Values.minio.rootPassword}}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: {{ .Values.namespace }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.minio.storage}}
+  storageClassName: standard
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+        - name: minio
+          image: "{{ .Values.minio.image }}:{{ .Values.minio.tag}}"
+          args:
+            - server
+            - /data
+            - --console-address
+            - ":{{ .Values.minio.consolePort}}"
+          envFrom:
+            - secretRef:
+                name: minio-secret
+          ports:
+            - containerPort: {{ .Values.minio.apiPort }}
+            - containerPort: {{ .Values.minio.consolePort}}
+          volumeMounts:
+            - name: minio-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: {{ .Values.minio.apiPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: {{ .Values.minio.apiPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 10
+      volumes:
+        - name: minio-data
+          persistentVolumeClaim:
+            claimName: minio-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: minio
+  ports:
+    - name: s3
+      port: {{ .Values.minio.apiPort }}
+      targetPort: {{ .Values.minio.apiPort }}
+    - name: console
+      port: {{ .Values.minio.consolePort}}
+      targetPort: {{ .Values.minio.consolePort}}
+  type: ClusterIP
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: minio-init-bucket
+  namespace: {{ .Values.namespace }}
+spec:
+  backoffLimit: 10
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: mc
+          image: "{{ .Values.minio.image }}:{{ .Values.minio.tag}}"
+          env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_USER
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio-secret
+                  key: MINIO_ROOT_PASSWORD
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "Waiting for MinIO..."
+              until /usr/bin/mc alias set local http://minio:{{ .Values.minio.apiPort }} $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do
+              sleep 2
+              done
+
+              echo "Creating bucket: {{ .Values.minio.bucketName }} (if not exists)"
+              /usr/bin/mc mb -p local/{{ .Values.minio.bucketName }} || true
+              echo "Bucket ready."
+{{- end }}              
