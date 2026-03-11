@@ -6,12 +6,14 @@ on:
     paths:
       - 'apps/model-api/**'
       - '.github/workflows/ci.yaml'
+      - '.github/workflows/cd-dev.yaml'      
   pull_request:
     branches: [ main ]
     paths:
       - 'apps/model-api/**'
       - '.github/workflows/ci.yaml'
-
+      - '.github/workflows/cd-dev.yaml'
+      
 permissions:
   contents: read
   packages: write
