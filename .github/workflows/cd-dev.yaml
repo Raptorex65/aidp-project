@@ -14,6 +14,7 @@ env:
   IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
   RELEASE_NAME: aidp-helm
   NAMESPACE: aidp-helm
+  MINIKUBE_EXE: "C:\Program Files\Kubernetes\Minikube\minikube.exe"
 
 jobs:
   deploy-dev:
@@ -25,12 +26,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check Minikube path
+        shell: powershell
+        run: |
+          Test-Path "C:\Program Files\Kubernetes\Minikube\minikube.exe"
+
       - name: Verify local tools
         shell: powershell
         run: |
           kubectl version --client
           helm version
-          minikube version
+          & "${{ env.MINIKUBE_EXE }}" version
           docker version
 
       - name: Set image tag from CI commit SHA
@@ -55,7 +61,7 @@ jobs:
       - name: Load image into Minikube
         shell: powershell
         run: |
-          minikube image load "${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.short_sha }}"
+          & "${{ env.MINIKUBE_EXE }}" image load "${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.short_sha }}"
 
       - name: Helm upgrade/install
         shell: powershell

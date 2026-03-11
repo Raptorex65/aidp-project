@@ -34,7 +34,7 @@ def load_latest_model():
 
     raise RuntimeError(f"Could not load model '{MODEL_NAME}'. Last error: {last_err}")
 
-
+#############startup####
 @app.on_event("startup")
 def startup_event():
     global _model
