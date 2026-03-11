@@ -1,0 +1,82 @@
+name: CD - Deploy to Dev on Self-Hosted Runner
+
+on:
+  workflow_run:
+    workflows: ["CI - Build and Push Model API"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  packages: read
+
+env:
+  IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
+  RELEASE_NAME: aidp-helm
+  NAMESPACE: aidp-helm
+
+jobs:
+  deploy-dev:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: [self-hosted, Windows, X64]
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify local tools
+        shell: pwsh
+        run: |
+          kubectl version --client
+          helm version
+          minikube version
+          docker version
+
+      - name: Set image tag from CI commit SHA
+        id: vars
+        shell: pwsh
+        run: |
+          $shortSha = "${{ github.event.workflow_run.head_sha }}".Substring(0,7)
+          "short_sha=$shortSha" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull image from GHCR
+        shell: pwsh
+        run: |
+          docker pull "${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.short_sha }}"
+
+      - name: Load image into Minikube
+        shell: pwsh
+        run: |
+          minikube image load "${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.short_sha }}"
+
+      - name: Helm upgrade/install
+        shell: pwsh
+        run: |
+          helm upgrade --install ${{ env.RELEASE_NAME }} ./charts/aidp `
+            --namespace ${{ env.NAMESPACE }} `
+            --create-namespace `
+            --set modelApi.image=${{ env.IMAGE_NAME }} `
+            --set modelApi.tag=${{ steps.vars.outputs.short_sha }} `
+            --set modelApi.imagePullPolicy=IfNotPresent `
+            --set ingress.host=aidp-helm.local
+
+      - name: Wait for rollout
+        shell: pwsh
+        run: |
+          kubectl rollout status deployment/postgres -n ${{ env.NAMESPACE }} --timeout=180s
+          kubectl rollout status deployment/minio -n ${{ env.NAMESPACE }} --timeout=180s
+          kubectl rollout status deployment/mlflow -n ${{ env.NAMESPACE }} --timeout=180s
+          kubectl rollout status deployment/model-api -n ${{ env.NAMESPACE }} --timeout=180s
+
+      - name: Show resulting pods
+        shell: pwsh
+        run: |
+          kubectl get pods -n ${{ env.NAMESPACE }}
