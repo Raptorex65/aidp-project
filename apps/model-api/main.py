@@ -3,7 +3,7 @@ import mlflow
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-# Create FastAPI app FIRST
+# Create FastAPI app first
 app = FastAPI(title="AIDP Model API", version="0.1.0")
 
 MODEL_NAME = os.getenv("MODEL_NAME", "iris-classifier")
@@ -15,7 +15,6 @@ class PredictRequest(BaseModel):
     petal_width: float
 
 _model = None
-
 
 def load_latest_model():
     tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
