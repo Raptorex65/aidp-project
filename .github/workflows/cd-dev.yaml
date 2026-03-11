@@ -14,7 +14,7 @@ env:
   IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
   RELEASE_NAME: aidp-helm
   NAMESPACE: aidp-helm
-  MINIKUBE_EXE: "C:\Program Files\Kubernetes\Minikube\minikube.exe"
+  MINIKUBE_EXE: 'C:\Program Files\Kubernetes\Minikube\minikube.exe'
 
 jobs:
   deploy-dev:

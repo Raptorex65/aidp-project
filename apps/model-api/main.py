@@ -44,7 +44,7 @@ def startup_event():
         _model = None
         print(f"WARNING: Model not loaded at startup: {e}")
 
-
+##############/healthz#########
 @app.get("/healthz")
 def healthz():
     return {"status": "ok", "model": MODEL_NAME}
