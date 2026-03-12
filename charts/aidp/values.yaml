@@ -34,7 +34,7 @@ mlflow:
 
 modelApi:
   enabled: true
-  image: ghcr.io/Raptorex65/aidp-model-api
+  image: ghcr.io/raptorex65/aidp-model-api
   tag: latest
   imagePullPolicy: IfNotPresent
   servicePort: 8080
