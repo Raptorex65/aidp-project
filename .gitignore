@@ -3,3 +3,9 @@ __pycache__/
 .env
 .kube/
 .vscode/
+
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+tfplan
