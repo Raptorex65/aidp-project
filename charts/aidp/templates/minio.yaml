@@ -20,7 +20,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.minio.storage}}
-  storageClassName: standard
+  storageClassName: gp2
 ---
 apiVersion: apps/v1
 kind: Deployment
