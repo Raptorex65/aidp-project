@@ -8,4 +8,5 @@ __pycache__/
 *.tfstate
 *.tfstate.*
 *.tfstate.backup
+*.terraform.lock.hcl
 tfplan
