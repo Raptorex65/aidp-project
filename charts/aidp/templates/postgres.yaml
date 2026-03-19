@@ -21,7 +21,8 @@ spec:
   resources:
     requests:
       storage: {{ .Values.postgres.storage }}
-  storageClassName: standard
+  storageClassName: gp2
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -46,6 +47,9 @@ spec:
           envFrom:
             - secretRef:
                 name: postgres-secret
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
