@@ -1,4 +1,4 @@
-namespace: aidp-helm
+namespace: aidp
 
 postgres:
   enabled: true
