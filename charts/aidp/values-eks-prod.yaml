@@ -1,0 +1,58 @@
+namespace: aidp
+
+global:
+  environment: prod
+  storageClass: gp2
+  imageTag: latest
+
+modelApi:
+  replicas: 2
+
+mlflow:
+  replicas: 1
+
+postgres:
+  storage:
+    size: 4Gi
+
+minio:
+  storage:
+    size: 4Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  host: aidp-eks-prod.local
+
+resources:
+  modelApi:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  mlflow:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 400m
+      memory: 512Mi
+
+  postgres:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  minio:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
