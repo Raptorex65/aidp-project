@@ -21,7 +21,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.postgres.storage }}
-  storageClassName: gp2
+  storageClassName: {{ .Values.global.storageClass }}
 
 ---
 apiVersion: apps/v1
@@ -41,7 +41,8 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: "{{ .Values.postgres.image }}:{{ .Values.postgres.tag }}"
+          image: "{{ .Values.postgres.image.repository }}:{{ .Values.postgres.image.tag }}"
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.postgres.servicePort }}
           envFrom:
