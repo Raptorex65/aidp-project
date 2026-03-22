@@ -26,7 +26,8 @@ spec:
     spec:
       containers:
         - name: mlflow
-          image: "{{ .Values.mlflow.image }}:{{ .Values.mlflow.tag }}"
+          image: "{{ .Values.mlflow.image.repository }}:{{ .Values.mlflow.image.tag }}"
+          imagePullPolicy: {{ .Values.mlflow.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.mlflow.servicePort }}
           env:
