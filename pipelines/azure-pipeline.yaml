@@ -1,0 +1,63 @@
+trigger: none
+
+pr: none
+
+parameters:
+  - name: imageTag
+    displayName: Image tag to deploy
+    type: string
+    default: latest
+
+variables:
+  azureServiceConnection: 'aidp-azure-sc'
+  aksResourceGroup: 'aidp-phase6-aks-rg'
+  aksClusterName: 'aidp-phase6-aks'
+  namespace: 'aidp'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+  - stage: Deploy_AKS_Dev
+    displayName: Deploy to AKS Dev
+    jobs:
+      - deployment: HelmDeployToAKS
+        displayName: Helm deploy to AKS
+        environment: 'aks-dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: HelmInstaller@1
+                  displayName: Install Helm
+                  inputs:
+                    helmVersionToInstall: 'latest'
+
+                - task: AzureCLI@2
+                  displayName: Get AKS credentials
+                  inputs:
+                    azureSubscription: '$(azureServiceConnection)'
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      az aks get-credentials \
+                        --resource-group $(aksResourceGroup) \
+                        --name $(aksClusterName) \
+                        --overwrite-existing
+
+                - script: |
+                    helm upgrade --install aidp ./charts/aidp \
+                      --namespace $(namespace) \
+                      --create-namespace \
+                      -f ./charts/aidp/values.yaml \
+                      -f ./charts/aidp/values-aks-dev.yaml \
+                      --set modelApi.image.tag=${{ parameters.imageTag }}
+                  displayName: Helm upgrade/install
+
+                - script: |
+                    kubectl get pods -n $(namespace)
+                    kubectl get svc -n $(namespace)
+                    kubectl get ingress -n $(namespace)
+                  displayName: Post-deploy verification
