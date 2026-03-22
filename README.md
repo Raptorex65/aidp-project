@@ -398,3 +398,123 @@ Example access pattern:
 
 http://<ELB-DNS>/api
 http://<ELB-DNS>/mlflow
+
+## Phase 8 – Multi-Tool Continuous Delivery (AKS + EKS)
+
+This phase introduces a **multi-environment deployment strategy** using a centralized build pipeline and cloud-specific deployment tools.
+
+The goal is to implement a **"build once, deploy everywhere"** approach across multiple Kubernetes clusters.
+
+---
+
+### Architecture Overview
+
+The CI/CD pipeline is split into two responsibilities:
+
+- **Centralized CI (GitHub Actions)**
+- **Distributed CD (Azure DevOps + AWS CodePipeline)**
+
+Developer Push
+↓
+GitHub Actions (CI)
+↓
+Build Docker Image
+Tag (commit SHA)
+Push → GHCR
+↓
+──────────────────────────────
+↓ ↓
+Azure DevOps Pipeline AWS CodePipeline
+(AKS - Dev) (EKS - Prod)
+↓ ↓
+Helm Deployment Helm Deployment
+
+
+---
+
+### Continuous Integration (CI)
+
+CI is handled by **GitHub Actions**.
+
+Responsibilities:
+
+- Build Docker image
+- Run validation checks
+- Tag image using commit SHA
+- Push image to **GitHub Container Registry (GHCR)**
+
+The output of CI is a **single immutable artifact**:
+
+ghcr.io/<repository>/aidp-model-api:<commit-sha>
+
+
+This artifact is reused across all environments.
+
+---
+
+### Continuous Deployment (CD)
+
+Deployment responsibilities are split across cloud-native tools.
+
+#### Azure DevOps (AKS – Development Environment)
+
+- Pulls image from GHCR
+- Deploys to AKS using Helm
+- Uses environment-specific configuration (`values-aks-dev.yaml`)
+- Performs validation and rollout checks
+
+#### AWS CodePipeline + CodeBuild (EKS – Production Environment)
+
+- Orchestrates deployment using CodePipeline
+- Executes deployment steps in CodeBuild
+- Uses Helm for Kubernetes deployment
+- Applies production configuration (`values-eks-prod.yaml`)
+
+---
+
+### Environment Strategy
+
+| Environment | Platform | Purpose |
+|------------|--------|--------|
+| AKS | Azure | Development / Testing |
+| EKS | AWS | Production |
+
+This separation reflects a realistic **multi-cloud deployment model**.
+
+---
+
+### Key Design Principles
+
+#### Single Build Artifact
+
+The Docker image is built only once and reused:
+
+- No rebuild per environment
+- Same artifact across AKS and EKS
+- Ensures consistency between environments
+
+#### Separation of CI and CD
+
+- CI is centralized (GitHub Actions)
+- CD is delegated to cloud-specific tools
+
+#### Cloud-Native Deployment
+
+Each platform uses its native tooling:
+
+- Azure DevOps for AKS
+- AWS CodePipeline for EKS
+
+---
+
+### Key Learning Outcomes
+
+This phase demonstrates:
+
+- Multi-cluster Kubernetes deployment
+- Separation of CI and CD responsibilities
+- Use of multiple DevOps platforms in a single architecture
+- Immutable artifact strategy
+- Real-world multi-cloud delivery pipeline design
+
+This architecture reflects patterns commonly used in enterprise environments.
