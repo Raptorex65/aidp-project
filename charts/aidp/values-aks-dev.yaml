@@ -1,0 +1,58 @@
+namespace: aidp
+
+global:
+  environment: dev
+  storageClass: managed-csi
+  imageTag: latest
+
+modelApi:
+  replicas: 1
+
+mlflow:
+  replicas: 1
+
+postgres:
+  storage:
+    size: 2Gi
+
+minio:
+  storage:
+    size: 2Gi
+
+ingress:
+  enabled: true
+  className: nginx
+  host: aidp-aks-dev.local
+
+resources:
+  modelApi:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+  mlflow:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
+
+  postgres:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+  minio:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
