@@ -20,7 +20,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.minio.storage}}
-  storageClassName: gp2
+  storageClassName: {{ .Values.global.storageClass }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -39,7 +39,8 @@ spec:
     spec:
       containers:
         - name: minio
-          image: "{{ .Values.minio.image }}:{{ .Values.minio.tag}}"
+          image: "{{ .Values.minio.image.repository }}:{{ .Values.minio.image.tag }}"
+          imagePullPolicy: {{ .Values.minio.image.pullPolicy }}
           args:
             - server
             - /data
