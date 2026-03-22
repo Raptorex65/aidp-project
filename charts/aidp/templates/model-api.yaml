@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
         - name: model-api
-          image: "{{ .Values.modelApi.image }}:{{ .Values.modelApi.tag }}"
-          imagePullPolicy: {{ .Values.modelApi.imagePullPolicy }}
+          image: "{{ .Values.modelApi.image.repository }}:{{ .Values.modelApi.image.tag }}"
+          imagePullPolicy: {{ .Values.modelApi.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.modelApi.servicePort }}
           env:
