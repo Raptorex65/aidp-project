@@ -49,7 +49,7 @@ jobs:
 
       - name: Validate Python syntax
         run: |
-          python -m py_compile apps/model-api/app.py          
+          python -m py_compile apps/model-api/main.py          
 
       - name: Extract image metadata
         id: meta
