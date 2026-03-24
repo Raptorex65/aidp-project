@@ -2,28 +2,34 @@ name: CI - Build and Push Model API
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
     paths:
-      - 'apps/model-api/**'
-      - '.github/workflows/ci.yaml'
-      - '.github/workflows/cd-dev.yaml'      
+      - "apps/model-api/**"
+      - ".github/workflows/ci.yaml"
+      - "charts/aidp/**"
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
     paths:
-      - 'apps/model-api/**'
-      - '.github/workflows/ci.yaml'
-      - '.github/workflows/cd-dev.yaml'
-      
+      - "apps/model-api/**"
+      - ".github/workflows/ci.yaml"
+      - "charts/aidp/**"
+  workflow_dispatch:
+
 permissions:
   contents: read
   packages: write
 
 env:
   IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
-
+  REGISTRY: ghcr.io
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.short_sha }}
 
     steps:
       - name: Checkout repository
@@ -41,23 +47,24 @@ jobs:
             pip install -r apps/model-api/requirements.txt
           fi
 
-      - name: Run basic Python syntax check
+      - name: Validate Python syntax
         run: |
-          python -m py_compile apps/model-api/main.py
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          python -m py_compile apps/model-api/app.py          
 
       - name: Extract image metadata
         id: meta
         run: |
-          SHORT_SHA=${GITHUB_SHA::7}
-          echo "short_sha=$SHORT_SHA" >> $GITHUB_OUTPUT
-          echo "image=${IMAGE_NAME}" >> $GITHUB_OUTPUT
+          SHORT_SHA="${GITHUB_SHA::7}"
+          echo "short_sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "Using image tag: $SHORT_SHA"
+                    
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
         run: |
@@ -67,7 +74,38 @@ jobs:
             -f apps/model-api/Dockerfile .
 
       - name: Push Docker image
-        if: github.event_name == 'push'
+        if: github.event_name != 'pull_request'
         run: |
           docker push ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.short_sha }}
           docker push ${{ steps.meta.outputs.image }}:latest
+
+  trigger-azure-devops:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Azure DevOps deployment pipeline
+        env:
+          AZDO_ORG: ${{ secrets.AZDO_ORG }}
+          AZDO_PROJECT: ${{ secrets.AZDO_PROJECT }}
+          AZDO_PIPELINE_ID: ${{ secrets.AZDO_PIPELINE_ID }}
+          AZDO_PAT: ${{ secrets.AZDO_PAT }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+        shell: bash
+        run: |
+          echo "Triggering Azure DevOps pipeline with image tag: $IMAGE_TAG"
+
+          AUTH=$(printf ':%s' "$AZDO_PAT" | base64 | tr -d '\n')
+
+          RESPONSE=$(curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Basic $AUTH" \
+            "https://dev.azure.com/${AZDO_ORG}/${AZDO_PROJECT}/_apis/pipelines/${AZDO_PIPELINE_ID}/runs?api-version=7.1" \
+            -d "{
+              \"templateParameters\": {
+                \"imageTag\": \"${IMAGE_TAG}\"
+              }
+            }")
+
+          echo "$RESPONSE"
