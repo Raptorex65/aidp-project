@@ -48,6 +48,23 @@ stages:
                         --overwrite-existing
 
                 - script: |
+                    echo "Received imageTag: ${{ parameters.imageTag }}"
+                  displayName: Print received image tag
+
+                - script: |
+                    echo "Deploying model-api image tag: ${{ parameters.imageTag }}"
+                    echo "Using values file: ./charts/aidp/values-aks-dev.yaml"
+                  displayName: Print Helm deployment inputs
+
+                - script: |
+                    helm template aidp ./charts/aidp \
+                      --namespace $(namespace) \
+                      -f ./charts/aidp/values.yaml \
+                      -f ./charts/aidp/values-aks-dev.yaml \
+                      --set modelApi.image.tag=${{ parameters.imageTag }} | grep image:
+                  displayName: Preview rendered image tags
+
+                - script: |
                     helm upgrade --install aidp ./charts/aidp \
                       --namespace $(namespace) \
                       --create-namespace \
