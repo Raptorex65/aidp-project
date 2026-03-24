@@ -22,7 +22,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
+  IMAGE_NAME: raptorex65/aidp-model-api
   REGISTRY: ghcr.io
 jobs:
   build-and-push:
@@ -69,16 +69,15 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.short_sha }} \
-            -t ${{ steps.meta.outputs.image }}:latest \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             -f apps/model-api/Dockerfile .
 
       - name: Push Docker image
         if: github.event_name != 'pull_request'
         run: |
-          docker push ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.short_sha }}
-          docker push ${{ steps.meta.outputs.image }}:latest
-
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
   trigger-azure-devops:
     runs-on: ubuntu-latest
     needs: build-and-push
