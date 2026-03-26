@@ -1,0 +1,63 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: eu-west-1
+    EKS_CLUSTER_NAME: aidp-phase7-eks
+    K8S_NAMESPACE: aidp
+    RELEASE_NAME: aidp
+    CHART_PATH: ./charts/aidp
+    BASE_VALUES_FILE: ./charts/aidp/values.yaml
+    ENV_VALUES_FILE: ./charts/aidp/values-eks-prod.yaml
+
+phases:
+  install:
+    commands:
+      - echo "Installing kubectl and Helm..."
+      - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+      - chmod +x kubectl
+      - mv kubectl /usr/local/bin/kubectl
+      - curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+      - kubectl version --client
+      - helm version
+
+  pre_build:
+    commands:
+      - echo "Preparing kubeconfig for EKS..."
+      - aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+      - echo "Checking cluster connectivity..."
+      - kubectl get nodes
+      - echo "Using IMAGE_TAG=$IMAGE_TAG"
+
+  build:
+    commands:
+    - echo "Rendering Helm templates before deployment..."
+    - |
+      helm template "$RELEASE_NAME" "$CHART_PATH" \
+        --namespace "$K8S_NAMESPACE" \
+        -f "$BASE_VALUES_FILE" \
+        -f "$ENV_VALUES_FILE" \
+        --set modelApi.image.tag="$IMAGE_TAG" | grep image:
+    - echo "Deploying Helm release to EKS..."
+    - |
+      helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+        --namespace "$K8S_NAMESPACE" \
+        --create-namespace \
+        -f "$BASE_VALUES_FILE" \
+        -f "$ENV_VALUES_FILE" \
+        --set modelApi.image.tag="$IMAGE_TAG"
+
+  post_build:
+    commands:
+      - echo "Verifying deployment..."
+      - kubectl rollout status deployment/model-api -n "$K8S_NAMESPACE" --timeout=180s
+      - kubectl get pods -n "$K8S_NAMESPACE"
+      - kubectl get svc -n "$K8S_NAMESPACE"
+      - kubectl get ingress -n "$K8S_NAMESPACE"
+      - echo "Checking deployed image..."
+      - kubectl get deployment model-api -n "$K8S_NAMESPACE" -o jsonpath="{.spec.template.spec.containers[0].image}"
+      - echo ""
+
+artifacts:
+  files:
+    - '**/*'
