@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    AWS_REGION: eu-west-1
+    AWS_REGION: us-east-1
     EKS_CLUSTER_NAME: aidp-phase7-eks
     K8S_NAMESPACE: aidp
     RELEASE_NAME: aidp
