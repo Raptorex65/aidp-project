@@ -29,8 +29,8 @@ phases:
       - kubectl get nodes
       - echo "Using IMAGE_TAG=$IMAGE_TAG"
 
-  build:
-    commands:
+build:
+  commands:
     - echo "Rendering Helm templates before deployment..."
     - |
       helm template "$RELEASE_NAME" "$CHART_PATH" \
