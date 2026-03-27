@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    AWS_REGION: us-east-1
+    AWS_REGION: eu-west-1
     EKS_CLUSTER_NAME: aidp-phase7-eks
     K8S_NAMESPACE: aidp
     RELEASE_NAME: aidp
@@ -23,11 +23,14 @@ phases:
 
   pre_build:
     commands:
-      - echo "Preparing kubeconfig for EKS..."
-      - aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
-      - echo "Checking cluster connectivity..."
-      - kubectl get nodes
-      - echo "Using IMAGE_TAG=$IMAGE_TAG"
+    - echo "Preparing kubeconfig for EKS..."
+    - echo "AWS_REGION=$AWS_REGION"
+    - echo "EKS_CLUSTER_NAME=$EKS_CLUSTER_NAME"
+    - aws eks list-clusters --region "$AWS_REGION"
+    - aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+    - echo "Checking cluster connectivity..."
+    - kubectl get nodes
+    - echo "Using IMAGE_TAG=$IMAGE_TAG"
 
   build:
     commands:
