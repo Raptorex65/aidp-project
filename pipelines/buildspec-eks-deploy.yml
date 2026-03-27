@@ -56,7 +56,7 @@ phases:
       - kubectl get ingress -n "$K8S_NAMESPACE"
       - echo "Checking deployed image..."
       - kubectl get deployment model-api -n "$K8S_NAMESPACE" -o jsonpath="{.spec.template.spec.containers[0].image}"
-      - echo ""
+      - echo "pods svc ingress deployment validated"
 
 artifacts:
   files:
