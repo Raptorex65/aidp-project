@@ -29,23 +29,23 @@ phases:
       - kubectl get nodes
       - echo "Using IMAGE_TAG=$IMAGE_TAG"
 
-build:
-  commands:
-    - echo "Rendering Helm templates before deployment..."
-    - |
-      helm template "$RELEASE_NAME" "$CHART_PATH" \
-        --namespace "$K8S_NAMESPACE" \
-        -f "$BASE_VALUES_FILE" \
-        -f "$ENV_VALUES_FILE" \
-        --set modelApi.image.tag="$IMAGE_TAG" | grep image:
-    - echo "Deploying Helm release to EKS..."
-    - |
-      helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
-        --namespace "$K8S_NAMESPACE" \
-        --create-namespace \
-        -f "$BASE_VALUES_FILE" \
-        -f "$ENV_VALUES_FILE" \
-        --set modelApi.image.tag="$IMAGE_TAG"
+  build:
+    commands:
+      - echo "Rendering Helm templates before deployment..."
+      - |
+        helm template "$RELEASE_NAME" "$CHART_PATH" \
+          --namespace "$K8S_NAMESPACE" \
+          -f "$BASE_VALUES_FILE" \
+          -f "$ENV_VALUES_FILE" \
+          --set modelApi.image.tag="$IMAGE_TAG" | grep image:
+      - echo "Deploying Helm release to EKS..."
+      - |
+        helm upgrade --install "$RELEASE_NAME" "$CHART_PATH" \
+          --namespace "$K8S_NAMESPACE" \
+          --create-namespace \
+          -f "$BASE_VALUES_FILE" \
+          -f "$ENV_VALUES_FILE" \
+          --set modelApi.image.tag="$IMAGE_TAG"
 
   post_build:
     commands:
