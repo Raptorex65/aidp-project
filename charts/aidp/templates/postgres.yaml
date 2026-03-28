@@ -20,7 +20,7 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: {{ .Values.postgres.storage }}
+      storage: {{ .Values.postgres.storage.size }}
   storageClassName: {{ .Values.global.storageClass }}
 
 ---
