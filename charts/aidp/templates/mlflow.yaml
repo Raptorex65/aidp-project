@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Values.namespace }}
 type: Opaque
 stringData:
-  AWS_ACCESS_KEY_ID: {{ .Values.minio.rootUser | quote }}
-  AWS_SECRET_ACCESS_KEY: {{ .Values.minio.rootPassword | quote }}
+  AWS_ACCESS_KEY_ID: {{ .Values.secrets.mlflow.awsAccessKeyId | quote }}
+  AWS_SECRET_ACCESS_KEY: {{ .Values.secrets.mlflow.awsSecretAccessKey | quote }}
 ---
 apiVersion: apps/v1
 kind: Deployment
