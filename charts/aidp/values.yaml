@@ -26,15 +26,20 @@ minio:
     repository: minio/minio
     tag: latest
     pullPolicy: IfNotPresent
+  mcImage:
+    repository: minio/mc
+    tag: latest
+    pullPolicy: IfNotPresent
   servicePort: 9000
   consolePort: 9001
   storage:
     size: 2Gi
+  bucketName: mlflow
 
 mlflow:
   enabled: true
   image:
-    repository: ghcr.io/raptorex65/aidp-mlflow
+    repository: ghcr.io/raptorex65/aidp-model-api
     tag: latest
     pullPolicy: Always
   replicas: 1
