@@ -6,8 +6,8 @@ metadata:
   namespace: {{ .Values.Namespace}}
 type: Opaque
 stringData:
-  MINIO_ROOT_USER: {{ .Values.minio.rootUser}}
-  MINIO_ROOT_PASSWORD: {{ .Values.minio.rootPassword}}
+  MINIO_ROOT_USER: {{ .Values.secrets.minio.rootUser}}
+  MINIO_ROOT_PASSWORD: {{ .Values.secrets.minio.rootPassword}}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -20,7 +20,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.minio.storage.size }}
-  storageClassName: {{ .Values.global.storageClass }}
+  storageClassName: {{ default "gp2" .Values.global.storageClass }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -103,7 +103,8 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: mc
-          image: "{{ .Values.minio.image }}:{{ .Values.minio.tag}}"
+          image: "{{ .Values.minio.mcImage.repository }}:{{ .Values.minio.mcImage.tag }}"
+          imagePullPolicy: {{ .Values.minio.mcImage.pullPolicy }}
           env:
             - name: MINIO_ROOT_USER
               valueFrom:
