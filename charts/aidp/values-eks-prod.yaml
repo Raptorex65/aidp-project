@@ -56,3 +56,17 @@ resources:
     limits:
       cpu: 500m
       memory: 512Mi
+
+secrets:
+  postgres:
+    username: aidpuser
+    password: strongpassword123
+    database: aidpdb
+
+  minio:
+    rootUser: minioadmin
+    rootPassword: minioadmin123
+
+  mlflow:
+    awsAccessKeyId: minioadmin
+    awsSecretAccessKey: minioadmin123
