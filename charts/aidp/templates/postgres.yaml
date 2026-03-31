@@ -6,9 +6,9 @@ metadata:
   namespace: {{ .Values.namespace }}
 type: Opaque
 stringData:
-  POSTGRES_USER: {{ .Values.postgres.username | quote }}
-  POSTGRES_PASSWORD: {{ .Values.postgres.password | quote }}
-  POSTGRES_DB: {{ .Values.postgres.database | quote }}
+  POSTGRES_USER: {{ .Values.secrets.postgres.username | quote }}
+  POSTGRES_PASSWORD: {{ .Values.secrets.postgres.password | quote }}
+  POSTGRES_DB: {{ .Values.secrets.postgres.database | quote }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -21,7 +21,7 @@ spec:
   resources:
     requests:
       storage: {{ .Values.postgres.storage.size }}
-  storageClassName: {{ .Values.global.storageClass }}
+  storageClassName: {{ default "gp2" .Values.global.storageClass }}
 
 ---
 apiVersion: apps/v1
