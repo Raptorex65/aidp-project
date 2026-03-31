@@ -506,6 +506,126 @@ Each platform uses its native tooling:
 - AWS CodePipeline for EKS
 
 ---
+# 🔧 Deployment Challenges & Resolutions (EKS Phase)
+
+During the AWS EKS deployment phase, several real-world Kubernetes and cloud integration issues were encountered and resolved.
+
+---
+
+## 1. PostgreSQL – CrashLoopBackOff
+
+### Issue  
+PostgreSQL failed to start due to:
+
+initdb: directory exists but is not empty (lost+found)
+
+
+### Root Cause  
+EBS volumes contain a default `lost+found` directory. PostgreSQL requires an empty directory.
+
+### Solution  
+
+env:
+
+name: PGDATA
+value: /var/lib/postgresql/data/pgdata
+
+
+This ensured clean initialization.
+
+---
+
+## 2. MLflow – ImagePullBackOff
+
+### Issue  
+
+ImagePullBackOff
+
+
+### Root Cause  
+Incorrect image reference in Helm values.
+
+### Solution  
+
+mlflow:
+image:
+repository: ghcr.io/raptorex65/aidp-model-api
+tag: latest
+
+
+Also ensured:
+- image exists in GHCR
+- correct tagging strategy
+
+---
+
+## 3. MinIO Init Job – InvalidImageName
+
+### Issue  
+
+InvalidImageName
+
+
+### Root Cause  
+Helm template used wrong image reference for MinIO client.
+
+### Solution  
+
+Separated images:
+
+minio:
+image:
+repository: minio/minio
+
+mcImage:
+repository: minio/mc
+
+
+---
+
+## 4. Persistent Volume Configuration
+
+### Issue  
+
+storageClassName: field not declared in schema
+
+
+### Root Cause  
+Incorrect YAML structure.
+
+### Solution  
+
+spec:
+storageClassName: gp2
+resources:
+requests:
+storage: 4Gi
+
+
+---
+
+## 5. IAM & Access Model (EKS)
+
+No IAM Access Entries were required because:
+
+- cluster access via `aws eks update-kubeconfig`
+- workloads used MinIO instead of AWS S3
+- credentials handled via Kubernetes secrets
+- EBS CSI already configured
+
+---
+
+## 🚀 Final Outcome
+
+| Component | Status |
+|----------|-------|
+| PostgreSQL | ✅ Running |
+| MinIO | ✅ Running |
+| MLflow | ✅ Running |
+| Model API | ✅ Running |
+| PVC (EBS) | ✅ Bound |
+| Helm Deployment | ✅ Successful |
+
 
 ### Key Learning Outcomes
 
