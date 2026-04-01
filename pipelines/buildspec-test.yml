@@ -1,9 +1,0 @@
-version: 0.2
-
-phases:
-  build:
-    commands:
-      - echo "HELLO FROM CODEBUILD"
-      - pwd
-      - ls -la
-      - ls -la pipelines

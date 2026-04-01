@@ -1,16 +1,14 @@
 # AIDP – AI Deployment Platform
-
 AIDP is a hands-on cloud-native platform engineering project designed to demonstrate the full lifecycle of a machine learning application deployed on Kubernetes with CI/CD automation.
 
-The project focuses on practical skills for:
+Stage 1 — Local Platform Build and Deployment
+Built and validated the AIDP platform locally using Minikube and Helm, with GitHub Actions CI and self-hosted runner-based CD for deployment into the local Kubernetes environment.
+Stage 2 — Azure Cloud Deployment
+Provisioned Azure infrastructure using Terraform, then implemented GitHub Actions for CI and Azure DevOps Pipelines for CD to deploy the platform to AKS.
+Stage 3 — AWS Cloud Deployment
+Provisioned AWS infrastructure using Terraform, then implemented GitHub Actions for CI and AWS CodePipeline + CodeBuild for CD to deploy the platform to EKS.
 
-- Kubernetes application deployment
-- Helm packaging
-- Docker image lifecycle
-- GitHub Actions CI/CD
-- GitHub Container Registry (GHCR)
-- Self-hosted runners
-- Infrastructure evolution toward cloud environments
+The project evolved in three major stages: first, a local Kubernetes-based delivery platform was built and validated with Minikube, Helm, and self-hosted GitHub Actions CD; second, the same platform was provisioned and deployed on Azure AKS using Terraform, GitHub Actions CI, and Azure DevOps CD; third, the architecture was extended to AWS EKS using Terraform, GitHub Actions CI, and AWS-native CD with CodePipeline and CodeBuild.
 
 ---
 
@@ -636,5 +634,10 @@ This phase demonstrates:
 - Use of multiple DevOps platforms in a single architecture
 - Immutable artifact strategy
 - Real-world multi-cloud delivery pipeline design
+- Designed and deployed ML platform on Kubernetes (AKS & EKS)
+- Implemented Helm-based modular architecture
+- Debugged real-world production issues (PVC, ImagePull, CrashLoop)
+- Built CI pipeline with GitHub Actions and GHCR
+- Designed multi-cloud deployment strategy
 
 This architecture reflects patterns commonly used in enterprise environments.
