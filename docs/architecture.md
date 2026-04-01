@@ -405,24 +405,26 @@ Goals:
 
 The architecture follows several core principles:
 
-### Reproducible deployments
+## Reproducible deployments
 
 Helm templates ensure deployments are consistent and versioned.
+
 ---
 
-### Immutable container images
+## Immutable container images
 
 CI builds versioned container images stored in a registry.
+
 ---
 
-### CI/CD separation
+## CI/CD separation
 
 CI is responsible for building artifacts.
 CD is responsible for deployment automation.
 
 ---
 
-### Infrastructure evolution
+## Infrastructure evolution
 
 The project intentionally evolves through stages:
 
@@ -432,7 +434,8 @@ local kubernetes
 → multi-cloud kubernetes
 
 
-This approach builds practical operational knowledge incrementally.
+This approach builds practical operational knowledge incrementally
+
 ---
 
 # Project Value
