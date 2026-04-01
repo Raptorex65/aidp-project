@@ -1,75 +1,116 @@
-# AIDP – AI Deployment Platform
-AIDP is a hands-on cloud-native platform engineering project designed to demonstrate the full lifecycle of a machine learning application deployed on Kubernetes with CI/CD automation.
+# 🚀 AIDP – AI Deployment Platform
 
-Stage 1 — Local Platform Build and Deployment
-Built and validated the AIDP platform locally using Minikube and Helm, with GitHub Actions CI and self-hosted runner-based CD for deployment into the local Kubernetes environment.
-Stage 2 — Azure Cloud Deployment
-Provisioned Azure infrastructure using Terraform, then implemented GitHub Actions for CI and Azure DevOps Pipelines for CD to deploy the platform to AKS.
-Stage 3 — AWS Cloud Deployment
-Provisioned AWS infrastructure using Terraform, then implemented GitHub Actions for CI and AWS CodePipeline + CodeBuild for CD to deploy the platform to EKS.
+AIDP is a hands-on **cloud-native platform engineering project** that demonstrates the end-to-end lifecycle of a machine learning application on Kubernetes, including **CI/CD automation and multi-cloud deployment**.
 
-The project evolved in three major stages: first, a local Kubernetes-based delivery platform was built and validated with Minikube, Helm, and self-hosted GitHub Actions CD; second, the same platform was provisioned and deployed on Azure AKS using Terraform, GitHub Actions CI, and Azure DevOps CD; third, the architecture was extended to AWS EKS using Terraform, GitHub Actions CI, and AWS-native CD with CodePipeline and CodeBuild.
+The project evolves from a **local Kubernetes setup** to a **multi-cloud architecture (Azure AKS + AWS EKS)** using a consistent deployment model.
 
 ---
 
-## Architecture Overview
+# 🧭 Project Overview
 
-The platform consists of several services deployed on Kubernetes:
+The goal of AIDP is to design and implement a complete ML platform that includes:
 
-- **PostgreSQL** – metadata backend for MLflow
-- **MinIO** – S3-compatible object storage
-- **MLflow** – experiment tracking and model registry
-- **Model API** – inference service
-- **Ingress** – routing HTTP traffic
-
-All components are deployed using **Helm**.
+- Containerized services
+- Kubernetes-based orchestration
+- Helm-based deployment
+- CI/CD pipelines
+- Multi-cloud deployment strategy
 
 ---
 
-## CI/CD Workflow
+# 🏗️ Architecture Overview
 
-### Continuous Integration (CI)
+The platform consists of the following components:
 
-The CI pipeline performs:
+- **PostgreSQL** → MLflow metadata storage  
+- **MinIO** → S3-compatible object storage  
+- **MLflow** → experiment tracking & model registry  
+- **Model API** → inference service  
+- **Ingress (NGINX)** → external routing  
 
-1. Checkout repository
-2. Validate Python code
-3. Build Docker image
-4. Tag image (`latest` + commit SHA)
-5. Push image to **GitHub Container Registry (GHCR)**
+All services are deployed using **Helm charts**.
 
-Example image:
-ghcr.io/raptorex65/aidp-model-api:<commit-sha>
+## CI/CD Architecture
+
+The CI/CD pipeline is split into two responsibilities:
+
+- **Centralized CI (GitHub Actions)**
+- **Distributed CD (Azure DevOps + AWS CodePipeline)**
+
+Developer Push
+↓
+GitHub Actions (CI)
+↓
+Build Docker Image
+Tag (commit SHA)
+Push → GHCR
+↓
+──────────────────────────────
+↓ ↓
+Azure DevOps Pipeline AWS CodePipeline
+(AKS - Dev) (EKS - Prod)
+↓ ↓
+Helm Deployment Helm Deployment
+
+---
+# ⚙️ CI/CD Strategy
+
+The project follows a **“build once, deploy everywhere”** model.
+
+## Continuous Integration (CI)
+Handled by **GitHub Actions**:
+- Build Docker image
+- Tag (`latest` + commit SHA)
+- Push to **GHCR**
+
+Responsibilities:
+
+- Build Docker image
+- Run validation checks
+- Tag image using commit SHA
+- Push image to **GitHub Container Registry (GHCR)**
+
+The output of CI is a **single immutable artifact**:
+
+ghcr.io/<repository>/aidp-model-api:<commit-sha>
+
+This artifact is reused across all environments.
+
+## Continuous Deployment (CD)
+
+Deployment is environment-specific:
+
+- **Local** → GitHub Actions (self-hosted runner)
+- **AKS** → Azure DevOps Pipelines
+- **EKS** → AWS CodePipeline + CodeBuild
+
+#### Azure DevOps (AKS – Development Environment)
+
+- Pulls image from GHCR
+- Deploys to AKS using Helm
+- Uses environment-specific configuration (`values-aks-dev.yaml`)
+- Performs validation and rollout checks
+
+#### AWS CodePipeline + CodeBuild (EKS – Production Environment)
+
+- Orchestrates deployment using CodePipeline
+- Executes deployment steps in CodeBuild
+- Uses Helm for Kubernetes deployment
+- Applies production configuration (`values-eks-prod.yaml`)
+---
+
+# 🧱 Project Evolution
 
 ---
 
-### Continuous Deployment (CD)
+## 🟢 Stage 1 — Local Platform Engineering (Phase 1–5)
 
-Deployment runs on a **self-hosted runner**.
+Built and validated the platform locally using:
 
-Steps:
-
-1. Wait for CI workflow completion
-2. Pull image from GHCR
-3. Load image into Minikube
-4. Deploy using Helm
-5. Verify rollout
-
----
-
-## Repository Structure
-
-.github/workflows/ CI/CD pipelines
-apps/ application services
-charts/aidp/ Helm chart
-docs/ documentation
-infra/ infrastructure resources
-k8s/ raw Kubernetes manifests
-scripts/ helper scripts
-
----
-
-## Roadmap
+- **Minikube**
+- **Helm**
+- **Docker**
+- **GitHub Actions (CI + self-hosted CD)**
 
 ## Phase 1–5 – Local Platform Engineering (Minikube)
 Sub-Phases
@@ -295,15 +336,24 @@ By the end of these phases, the project demonstrates a complete **local platform
 These foundations enable the next stages of the project:
 
 - **Phase 6 – Deploying the platform to Azure AKS**
-- **Phase 7 – Extending the deployment to AWS EKS for multi-cloud capability**
+- **Phase 7-8 – Extending the deployment to AWS EKS for multi-cloud capability**
 
 The local environment acts as a **development and validation layer** before moving to cloud infrastructure.
 
-## Phase 6 => Cloud deployment on Azure AKS
+---
 
+## 🔵 Stage 2 — Azure Cloud Deployment (Phase 6)
+
+Migrated the platform to **Azure Kubernetes Service (AKS)**.
 Deploy the platform to Azure Kubernetes Service (AKS) using Terraform to transition from a local Kubernetes environment to a managed cloud platform.
 
-Key objectives:
+### Key Components
+
+- Infrastructure → **Terraform**
+- CI → GitHub Actions
+- CD → **Azure DevOps Pipelines**
+
+### Key objectives
 
 - Provision AKS infrastructure using Infrastructure as Code (Terraform)
 - Deploy Kubernetes workloads using the existing Helm chart
@@ -327,13 +377,19 @@ The platform stack deployed to AKS includes:
 
 This phase establishes the foundation for cloud-native deployment, which is later extended to multi-cloud support with AWS EKS in Phase 7.
 
-## Phase 7 – AWS EKS Deployment (Multi-cloud expansion to AWS EKS)
+---
+
+## 🟣 Stage 3 — AWS Cloud Deployment (Phase 7–8)
+
+Extended the platform to **Amazon EKS** and introduced multi-cloud CD.
+
+### Phase 7 – AWS EKS Deployment (Multi-cloud expansion to AWS EKS)
 
 This phase extends the platform to **Amazon Web Services** to demonstrate multi-cloud portability.
 
 The same application stack that runs on **AKS** is deployed to **Amazon EKS**.
 
-### Infrastructure Provisioning
+#### Infrastructure Provisioning
 
 The Kubernetes infrastructure is created using **Terraform**.
 
@@ -345,7 +401,7 @@ Key resources:
 - Managed node group
 - IAM roles for cluster components
 
-### Storage Integration (EBS CSI)
+#### Storage Integration (EBS CSI)
 
 Unlike AKS, EKS does not automatically provide persistent storage integration.
 
@@ -363,7 +419,7 @@ Example:
 
 PVC → EBS CSI driver → EBS volume
 
-### Application Deployment
+#### Application Deployment
 
 The platform is deployed using the same **Helm chart** used in earlier phases.
 
@@ -376,7 +432,7 @@ Services deployed:
 
 Persistent storage is backed by **Amazon EBS volumes**.
 
-### Ingress and External Access
+#### Ingress and External Access
 
 Traffic is routed through:
 Internet
@@ -397,223 +453,110 @@ Example access pattern:
 http://<ELB-DNS>/api
 http://<ELB-DNS>/mlflow
 
-## Phase 8 – Multi-Tool Continuous Delivery (AKS + EKS)
+### Phase 8 – Multi-Tool Continuous Delivery (AKS + EKS)
 
 This phase introduces a **multi-environment deployment strategy** using a centralized build pipeline and cloud-specific deployment tools.
 
 The goal is to implement a **"build once, deploy everywhere"** approach across multiple Kubernetes clusters.
 
----
+### Infrastructure
 
-### Architecture Overview
+- VPC, subnets, EKS → Terraform
+- Node groups + IAM roles
 
-The CI/CD pipeline is split into two responsibilities:
+### Storage
 
-- **Centralized CI (GitHub Actions)**
-- **Distributed CD (Azure DevOps + AWS CodePipeline)**
+- **EBS CSI driver**
+- Dynamic volume provisioning
 
-Developer Push
-↓
-GitHub Actions (CI)
-↓
-Build Docker Image
-Tag (commit SHA)
-Push → GHCR
-↓
-──────────────────────────────
-↓ ↓
-Azure DevOps Pipeline AWS CodePipeline
-(AKS - Dev) (EKS - Prod)
-↓ ↓
-Helm Deployment Helm Deployment
+### CD Strategy
 
+- **CodePipeline → orchestration**
+- **CodeBuild → Helm deployment**
 
----
-
-### Continuous Integration (CI)
-
-CI is handled by **GitHub Actions**.
-
-Responsibilities:
-
-- Build Docker image
-- Run validation checks
-- Tag image using commit SHA
-- Push image to **GitHub Container Registry (GHCR)**
-
-The output of CI is a **single immutable artifact**:
-
-ghcr.io/<repository>/aidp-model-api:<commit-sha>
-
-
-This artifact is reused across all environments.
-
----
-
-### Continuous Deployment (CD)
-
-Deployment responsibilities are split across cloud-native tools.
-
-#### Azure DevOps (AKS – Development Environment)
-
-- Pulls image from GHCR
-- Deploys to AKS using Helm
-- Uses environment-specific configuration (`values-aks-dev.yaml`)
-- Performs validation and rollout checks
-
-#### AWS CodePipeline + CodeBuild (EKS – Production Environment)
-
-- Orchestrates deployment using CodePipeline
-- Executes deployment steps in CodeBuild
-- Uses Helm for Kubernetes deployment
-- Applies production configuration (`values-eks-prod.yaml`)
-
----
-
-### Environment Strategy
+### Multi-Cloud Model
 
 | Environment | Platform | Purpose |
 |------------|--------|--------|
-| AKS | Azure | Development / Testing |
+| AKS | Azure | Development |
 | EKS | AWS | Production |
 
-This separation reflects a realistic **multi-cloud deployment model**.
+---
+
+# 🎯 Key Design Principles
+
+- **Build Once, Deploy Everywhere**
+- **Separation of CI and CD**
+- **Cloud-native tooling per platform**
+- **Reusable Helm-based deployments**
+- **Immutable artifact strategy**
 
 ---
 
-### Key Design Principles
+# 🧠 Lessons Learned
 
-#### Single Build Artifact
-
-The Docker image is built only once and reused:
-
-- No rebuild per environment
-- Same artifact across AKS and EKS
-- Ensures consistency between environments
-
-#### Separation of CI and CD
-
-- CI is centralized (GitHub Actions)
-- CD is delegated to cloud-specific tools
-
-#### Cloud-Native Deployment
-
-Each platform uses its native tooling:
-
-- Azure DevOps for AKS
-- AWS CodePipeline for EKS
-
----
-# 🔧 Deployment Challenges & Resolutions (EKS Phase)
-
-During the AWS EKS deployment phase, several real-world Kubernetes and cloud integration issues were encountered and resolved.
+- Kubernetes failures are almost always configuration issues  
+- Helm enables scalable and reusable deployment architecture  
+- Cloud providers differ significantly despite Kubernetes abstraction  
+- Stateful workloads require careful storage handling  
+- CI/CD is a maturity model, not just tooling  
+- Debugging is a critical engineering skill  
 
 ---
 
-## 1. PostgreSQL – CrashLoopBackOff
+# 🛠️ Appendix — Deployment Challenges & Resolutions
 
-### Issue  
-PostgreSQL failed to start due to:
+## PostgreSQL – CrashLoopBackOff
 
-initdb: directory exists but is not empty (lost+found)
+**Issue:**
+PostgreSQL failed due to non-empty data directory (`lost+found`).
 
-
-### Root Cause  
-EBS volumes contain a default `lost+found` directory. PostgreSQL requires an empty directory.
-
-### Solution  
-
-env:
-
-name: PGDATA
-value: /var/lib/postgresql/data/pgdata
-
-
-This ensured clean initialization.
+**Solution:**
+Configured `PGDATA` to use a subdirectory.
 
 ---
 
-## 2. MLflow – ImagePullBackOff
+## MLflow – ImagePullBackOff
 
-### Issue  
-
-ImagePullBackOff
-
-
-### Root Cause  
+**Issue:**
 Incorrect image reference in Helm values.
 
-### Solution  
-
-mlflow:
-image:
-repository: ghcr.io/raptorex65/aidp-model-api
-tag: latest
-
-
-Also ensured:
-- image exists in GHCR
-- correct tagging strategy
+**Solution:**
+Corrected GHCR image repository and tag.
 
 ---
 
-## 3. MinIO Init Job – InvalidImageName
+## MinIO Init Job – InvalidImageName
 
-### Issue  
+**Issue:**
+Incorrect Helm template image reference.
 
-InvalidImageName
-
-
-### Root Cause  
-Helm template used wrong image reference for MinIO client.
-
-### Solution  
-
-Separated images:
-
-minio:
-image:
-repository: minio/minio
-
-mcImage:
-repository: minio/mc
-
+**Solution:**
+Separated MinIO server and client images.
 
 ---
 
-## 4. Persistent Volume Configuration
+## Persistent Volume Issues
 
-### Issue  
+**Issue:**
+Incorrect `storageClassName` placement.
 
-storageClassName: field not declared in schema
-
-
-### Root Cause  
-Incorrect YAML structure.
-
-### Solution  
-
-spec:
-storageClassName: gp2
-resources:
-requests:
-storage: 4Gi
-
+**Solution:**
+Fixed YAML structure and used correct storage class.
 
 ---
 
-## 5. IAM & Access Model (EKS)
+## IAM & Access Model (EKS)
 
-No IAM Access Entries were required because:
+No additional IAM access entries required because:
 
-- cluster access via `aws eks update-kubeconfig`
-- workloads used MinIO instead of AWS S3
-- credentials handled via Kubernetes secrets
-- EBS CSI already configured
+- Cluster accessed via kubeconfig
+- Storage handled via EBS CSI
+- No AWS-native service dependency (used MinIO)
 
 ---
 
-## 🚀 Final Outcome
+## ✅ Final Outcome
 
 | Component | Status |
 |----------|-------|
@@ -624,20 +567,17 @@ No IAM Access Entries were required because:
 | PVC (EBS) | ✅ Bound |
 | Helm Deployment | ✅ Successful |
 
+---
 
-### Key Learning Outcomes
+## 🚀 Summary
 
-This phase demonstrates:
+This project demonstrates:
 
 - Multi-cluster Kubernetes deployment
-- Separation of CI and CD responsibilities
-- Use of multiple DevOps platforms in a single architecture
-- Immutable artifact strategy
-- Real-world multi-cloud delivery pipeline design
-- Designed and deployed ML platform on Kubernetes (AKS & EKS)
-- Implemented Helm-based modular architecture
-- Debugged real-world production issues (PVC, ImagePull, CrashLoop)
-- Built CI pipeline with GitHub Actions and GHCR
-- Designed multi-cloud deployment strategy
+- Multi-cloud platform architecture (AKS + EKS)
+- CI/CD separation and orchestration
+- Helm-based reusable deployment model
+- Real-world debugging and problem resolution
 
-This architecture reflects patterns commonly used in enterprise environments.
+It reflects patterns commonly used in **production-grade cloud-native systems**.
+
