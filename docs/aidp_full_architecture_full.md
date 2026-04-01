@@ -51,15 +51,3 @@ Both cloud environments run the same logical platform stack:
 
 The purpose of this diagram is to show environment parity across cloud platforms, while still preserving distinct deployment paths and infrastructure provisioning models.
 
-## Why there are no explicit cloud load balancers here
-
-This diagram intentionally does **not** place Azure Load Balancer or AWS ELB at the center of the architecture view.
-
-That is because the real architectural focus of the project is:
-
-- consistent platform stack
-- reusable Helm deployment
-- environment-specific CI/CD and infrastructure
-- managed Kubernetes portability
-
-Cloud-native ingress exposure can exist underneath this model, but it is not the clearest primary story for this diagram.
