@@ -38,7 +38,8 @@ spec:
     spec:
       containers:
         - name: minio
-          image: minio/minio:RELEASE.2024-06-11T03-13-30Z
+          image: ghcr.io/coollabsio/minio:RELEASE.2025-10-15T17-29-55Z
+          imagePullPolicy: IfNotPresent
           args:
             - server
             - /data
@@ -93,31 +94,47 @@ metadata:
   name: minio-init-bucket
   namespace: aidp
 spec:
-  backoffLimit: 10
+  backoffLimit: 5
   template:
     spec:
       restartPolicy: OnFailure
       containers:
-        - name: mc
-          image: minio/mc:latest
+        - name: aws-cli
+          image: public.ecr.aws/aws-cli/aws-cli:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
           env:
-            - name: MINIO_ROOT_USER
+            - name: AWS_ACCESS_KEY_ID
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_USER
-            - name: MINIO_ROOT_PASSWORD
+            - name: AWS_SECRET_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
                   name: minio-secret
                   key: MINIO_ROOT_PASSWORD
-          command: ["/bin/sh", "-c"]
+            - name: AWS_DEFAULT_REGION
+              value: us-east-1
           args:
             - |
               echo "Waiting for MinIO..."
-              until /usr/bin/mc alias set local http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do
-                sleep 2
+
+              until aws --endpoint-url http://minio:9000 \
+                s3api list-buckets >/dev/null 2>&1; do
+                sleep 3
               done
-              echo "Creating bucket: mlflow (if not exists)"
-              /usr/bin/mc mb -p local/mlflow || true
-              echo "Bucket ready."
+
+              echo "MinIO is available."
+
+              if aws --endpoint-url http://minio:9000 \
+                s3api head-bucket --bucket mlflow 2>/dev/null; then
+                echo "Bucket already exists."
+              else
+                aws --endpoint-url http://minio:9000 \
+                  s3api create-bucket --bucket mlflow
+              fi
+
+              echo "Verifying bucket..."
+              aws --endpoint-url http://minio:9000 \
+                s3api head-bucket --bucket mlflow
