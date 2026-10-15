@@ -15,8 +15,8 @@ spec:
     spec:
       containers:
         - name: model-api
-          image: local-model-api
-          imagePullPolicy: Never
+          image: aidp-model-api:v2
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080
           env:
@@ -38,7 +38,7 @@ spec:
                   key: MINIO_ROOT_PASSWORD
           readinessProbe:
             httpGet:
-              path: /healthz
+              path: /readyz
               port: 8080
             initialDelaySeconds: 5
             periodSeconds: 5
