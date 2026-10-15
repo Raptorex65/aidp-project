@@ -2,6 +2,7 @@ import os
 import mlflow
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi import HTTPException
 
 # Create FastAPI app first
 app = FastAPI(title="AIDP Model API", version="0.1.0")
@@ -17,22 +18,14 @@ class PredictRequest(BaseModel):
 _model = None
 
 def load_latest_model():
-    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "http://localhost:5000")
+    tracking_uri = os.getenv(
+        "MLFLOW_TRACKING_URI",
+        "http://localhost:5000"
+    )
     mlflow.set_tracking_uri(tracking_uri)
 
-    candidates = [
-        f"models:/{MODEL_NAME}/Production",
-        f"models:/{MODEL_NAME}/latest",
-    ]
-
-    last_err = None
-    for uri in candidates:
-        try:
-            return mlflow.pyfunc.load_model(uri)
-        except Exception as e:
-            last_err = e
-
-    raise RuntimeError(f"Could not load model '{MODEL_NAME}'. Last error: {last_err}")
+    model_uri = f"models:/{MODEL_NAME}/1"
+    return mlflow.pyfunc.load_model(model_uri)
 
 #############startup####
 @app.on_event("startup")
@@ -49,6 +42,14 @@ def startup_event():
 def healthz():
     return {"status": "ok", "model": MODEL_NAME}
 
+@app.get("/readyz")
+def readyz():
+    if _model is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Model not loaded"
+        )
+    return {"status": "ready", "model": MODEL_NAME}
 
 @app.post("/predict")
 def predict(req: PredictRequest):
