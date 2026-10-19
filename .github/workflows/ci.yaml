@@ -35,6 +35,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Inspect GitHub environment
+        run: |
+          echo "Commit: $GITHUB_SHA"
+          echo "Repository: $GITHUB_REPOSITORY"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Event: $GITHUB_EVENT_NAME"
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -59,7 +65,7 @@ jobs:
           echo "Using image tag: $SHORT_SHA"
                     
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'      
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -74,37 +80,38 @@ jobs:
             -f apps/model-api/Dockerfile .
 
       - name: Push Docker image
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-  trigger-azure-devops:
-    runs-on: ubuntu-latest
-    needs: build-and-push
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-    steps:
-      - name: Trigger Azure DevOps deployment pipeline
-        env:
-          AZDO_ORG: ${{ secrets.AZDO_ORG }}
-          AZDO_PROJECT: ${{ secrets.AZDO_PROJECT }}
-          AZDO_PIPELINE_ID: ${{ secrets.AZDO_PIPELINE_ID }}
-          AZDO_PAT: ${{ secrets.AZDO_PAT }}
-          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
-        shell: bash
-        run: |
-          echo "Triggering Azure DevOps pipeline with image tag: $IMAGE_TAG"
+  # trigger-azure-devops:
+  #   runs-on: ubuntu-latest
+  #   needs: build-and-push
+  #   if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-          AUTH=$(printf ':%s' "$AZDO_PAT" | base64 | tr -d '\n')
+  #   steps:
+  #     - name: Trigger Azure DevOps deployment pipeline
+  #       env:
+  #         AZDO_ORG: ${{ secrets.AZDO_ORG }}
+  #         AZDO_PROJECT: ${{ secrets.AZDO_PROJECT }}
+  #         AZDO_PIPELINE_ID: ${{ secrets.AZDO_PIPELINE_ID }}
+  #         AZDO_PAT: ${{ secrets.AZDO_PAT }}
+  #         IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
+  #       shell: bash
+  #       run: |
+  #         echo "Triggering Azure DevOps pipeline with image tag: $IMAGE_TAG"
 
-          RESPONSE=$(curl -sS -X POST \
-            -H "Content-Type: application/json" \
-            -H "Authorization: Basic $AUTH" \
-            "https://dev.azure.com/${AZDO_ORG}/${AZDO_PROJECT}/_apis/pipelines/${AZDO_PIPELINE_ID}/runs?api-version=7.1" \
-            -d "{
-              \"templateParameters\": {
-                \"imageTag\": \"${IMAGE_TAG}\"
-              }
-            }")
+  #         AUTH=$(printf ':%s' "$AZDO_PAT" | base64 | tr -d '\n')
 
-          echo "$RESPONSE"
+  #         RESPONSE=$(curl -sS -X POST \
+  #           -H "Content-Type: application/json" \
+  #           -H "Authorization: Basic $AUTH" \
+  #           "https://dev.azure.com/${AZDO_ORG}/${AZDO_PROJECT}/_apis/pipelines/${AZDO_PIPELINE_ID}/runs?api-version=7.1" \
+  #           -d "{
+  #             \"templateParameters\": {
+  #               \"imageTag\": \"${IMAGE_TAG}\"
+  #             }
+  #           }")
+
+  #         echo "$RESPONSE"
