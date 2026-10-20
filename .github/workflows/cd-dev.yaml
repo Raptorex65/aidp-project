@@ -87,7 +87,7 @@ jobs:
           helm upgrade --install ${{ env.RELEASE_NAME }} ./charts/aidp `
             --namespace ${{ env.NAMESPACE }} `
             --create-namespace `
-            -f ./charts/aidp/values-local.yaml ` 
+            -f ./charts/aidp/values-local.yaml `
             --set modelApi.image.repository=${{ env.IMAGE_NAME }} `
             --set-string modelApi.image.tag=${{ steps.vars.outputs.short_sha }} `
             --set modelApi.image.pullPolicy=IfNotPresent `
