@@ -1,0 +1,10 @@
+global:
+  storageClass: standard
+
+secrets:
+  minio:
+    rootUser: minio
+    rootPassword: minio12345
+  mlflow:
+    awsAccessKeyId: minio
+    awsSecretAccessKey: minio12345

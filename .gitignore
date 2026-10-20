@@ -10,5 +10,4 @@ __pycache__/
 *.tfstate.backup
 *.terraform.lock.hcl
 tfplan
-/charts/aidp/values-local.yaml
 /actions-runner/
