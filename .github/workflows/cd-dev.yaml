@@ -12,24 +12,37 @@ permissions:
 
 env:
   IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
-  RELEASE_NAME: aidp-helm
+  RELEASE_NAME: aidp-local
   NAMESPACE: aidp-helm
   MINIKUBE_EXE: 'C:\Program Files\Kubernetes\Minikube\minikube.exe'
 
 jobs:
   deploy-dev:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      }}
     runs-on: [self-hosted, Windows, X64]
     environment: dev
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
-      - name: Check Minikube path
+      - name: Check Minikube path and cluster
         shell: powershell
         run: |
-          Test-Path "C:\Program Files\Kubernetes\Minikube\minikube.exe"
+          if (-not (Test-Path $env:MINIKUBE_EXE)) {
+            throw "Minikube executable not found"
+          }
+          & $env:MINIKUBE_EXE status
+          if ($LASTEXITCODE -ne 0) {
+            throw "Minikube is not ready"
+          }
 
       - name: Verify local tools
         shell: powershell
@@ -44,8 +57,13 @@ jobs:
         shell: powershell
         run: |
           $shortSha = "${{ github.event.workflow_run.head_sha }}".Substring(0,7)
-          "short_sha=$shortSha" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
-
+          $utf8 = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::AppendAllText(
+            $env:GITHUB_OUTPUT,
+            "short_sha=$shortSha`n",
+            $utf8
+          )
+            
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -69,9 +87,9 @@ jobs:
           helm upgrade --install ${{ env.RELEASE_NAME }} ./charts/aidp `
             --namespace ${{ env.NAMESPACE }} `
             --create-namespace `
-            --set modelApi.image=${{ env.IMAGE_NAME }} `
-            --set modelApi.tag=${{ steps.vars.outputs.short_sha }} `
-            --set modelApi.imagePullPolicy=IfNotPresent `
+            --set modelApi.image.repository=${{ env.IMAGE_NAME }} `
+            --set-string modelApi.image.tag=${{ steps.vars.outputs.short_sha }} `
+            --set modelApi.image.pullPolicy=IfNotPresent `
             --set ingress.host=aidp-helm.local
 
       - name: Wait for rollout

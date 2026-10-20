@@ -11,3 +11,4 @@ __pycache__/
 *.terraform.lock.hcl
 tfplan
 /charts/aidp/values-local.yaml
+/actions-runner/
