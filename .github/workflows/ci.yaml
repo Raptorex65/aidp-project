@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - "apps/model-api/**"
+      - "apps/mlflow/**"
+      - "apps/trainer/**"
       - ".github/workflows/ci.yaml"
       - "charts/aidp/**"
   pull_request:
@@ -13,6 +15,8 @@ on:
       - main
     paths:
       - "apps/model-api/**"
+      - "apps/mlflow/**"
+      - "apps/trainer/**"
       - ".github/workflows/ci.yaml"
       - "charts/aidp/**"
   workflow_dispatch:
@@ -22,14 +26,27 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: raptorex65/aidp-model-api
+  IMAGE_OWNER: raptorex65
   REGISTRY: ghcr.io
+
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: model-api
+            image: aidp-model-api
+            dockerfile: apps/model-api/Dockerfile
 
-    outputs:
-      image_tag: ${{ steps.meta.outputs.short_sha }}
+          - component: mlflow
+            image: aidp-mlflow
+            dockerfile: apps/mlflow/Dockerfile
+
+          - component: trainer
+            image: aidp-trainer
+            dockerfile: apps/trainer/Dockerfile
 
     steps:
       - name: Checkout repository
@@ -77,15 +94,15 @@ jobs:
       - name: Build Docker image
         run: |
           docker build \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }} \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
-            -f apps/model-api/Dockerfile .
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.image }}:${{ steps.meta.outputs.short_sha}} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.image }}:latest \
+            -f ${{ matrix.dockerfile }} .
 
       - name: Push Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.short_sha }}
-          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              docker push ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.image }}:${{ steps.meta.outputs.short_sha }}
+              docker push ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.image }}:latest
 
   # trigger-azure-devops:
   #   runs-on: ubuntu-latest
