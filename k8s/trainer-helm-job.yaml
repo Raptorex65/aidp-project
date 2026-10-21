@@ -10,8 +10,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: trainer
-          image: aidp-trainer:dev
-          imagePullPolicy: Never
+          image: ghcr.io/raptorex65/aidp-trainer:f64dede
+          imagePullPolicy: IfNotPresent
           env:
             - name: MLFLOW_TRACKING_URI
               value: "http://mlflow:5000"

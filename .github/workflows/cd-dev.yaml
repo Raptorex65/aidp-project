@@ -11,7 +11,8 @@ permissions:
   packages: read
 
 env:
-  IMAGE_NAME: ghcr.io/raptorex65/aidp-model-api
+  MODEL_API_IMAGE: ghcr.io/raptorex65/aidp-model-api
+  MLFLOW_IMAGE: ghcr.io/raptorex65/aidp-mlflow
   RELEASE_NAME: aidp-local
   NAMESPACE: aidp-helm
   MINIKUBE_EXE: 'C:\Program Files\Kubernetes\Minikube\minikube.exe'
@@ -74,24 +75,23 @@ jobs:
       - name: Pull image from GHCR
         shell: powershell
         run: |
-          docker pull "${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.short_sha }}"
+          docker pull "${{ env.MODEL_API_IMAGE }}:${{ steps.vars.outputs.short_sha }}"
+          docker pull "${{ env.MLFLOW_IMAGE }}:${{ steps.vars.outputs.short_sha }}"
 
       - name: Load image into Minikube
         shell: powershell
         run: |
-          & "${{ env.MINIKUBE_EXE }}" image load "${{ env.IMAGE_NAME }}:${{ steps.vars.outputs.short_sha }}"
+          & "$env:MINIKUBE_EXE" image load "${{ env.MODEL_API_IMAGE }}:${{ steps.vars.outputs.short_sha }}"
+          & "$env:MINIKUBE_EXE" image load "${{ env.MLFLOW_IMAGE }}:${{ steps.vars.outputs.short_sha }}"
 
       - name: Helm upgrade/install
         shell: powershell
         run: |
-          helm upgrade --install ${{ env.RELEASE_NAME }} ./charts/aidp `
-            --namespace ${{ env.NAMESPACE }} `
-            --create-namespace `
-            -f ./charts/aidp/values-local.yaml `
-            --set modelApi.image.repository=${{ env.IMAGE_NAME }} `
-            --set-string modelApi.image.tag=${{ steps.vars.outputs.short_sha }} `
-            --set modelApi.image.pullPolicy=IfNotPresent `
-            --set ingress.host=aidp-helm.local
+          helm upgrade --install ${{ env.RELEASE_NAME }} ./charts/aidp --namespace ${{ env.NAMESPACE }} --create-namespace -f ./charts/aidp/values-local.yaml --set modelApi.image.repository=${{ env.MODEL_API_IMAGE }} --set-string modelApi.image.tag=${{ steps.vars.outputs.short_sha }} --set modelApi.image.pullPolicy=IfNotPresent --set mlflow.image.repository=${{ env.MLFLOW_IMAGE }} --set-string mlflow.image.tag=${{ steps.vars.outputs.short_sha }} --set mlflow.image.pullPolicy=IfNotPresent --set ingress.host=aidp-helm.local
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Helm upgrade failed with exit code $LASTEXITCODE"
+          }
 
       - name: Wait for rollout
         shell: powershell
