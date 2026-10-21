@@ -57,6 +57,7 @@ jobs:
           echo "Commit: $GITHUB_SHA"
           echo "Repository: $GITHUB_REPOSITORY"
           echo "Runner OS: $RUNNER_OS"
+          echo "Event_type: $GITHUB_EVENT_NAME"
           echo "Python version:"
           python --version
 
