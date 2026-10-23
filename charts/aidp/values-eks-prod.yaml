@@ -10,17 +10,22 @@ modelApi:
 
 mlflow:
   replicas: 1
+  s3EndpointUrl: "http://minio:9000"
+  backendStoreUri: "postgresql+psycopg2://aidpuser:powerkube19@postgres:5432/aidpdb"
+  artifactRoot: "s3://mlflow"
 
 postgres:
+  replicas: 1
   storage:
     size: 4Gi
 
 minio:
+  replicas: 1
   storage:
     size: 4Gi
 
 ingress:
-  enabled: true
+  enabled: false
   className: nginx
   host: aidp-eks-prod.local
 
@@ -56,17 +61,3 @@ resources:
     limits:
       cpu: 500m
       memory: 512Mi
-
-secrets:
-  postgres:
-    username: aidpuser
-    password: strongpassword123
-    database: aidpdb
-
-  minio:
-    rootUser: minioadmin
-    rootPassword: minioadmin123
-
-  mlflow:
-    awsAccessKeyId: minioadmin
-    awsSecretAccessKey: minioadmin123

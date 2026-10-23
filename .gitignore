@@ -11,3 +11,6 @@ __pycache__/
 *.terraform.lock.hcl
 tfplan
 /actions-runner/
+
+# EKS credentials
+charts/aidp/values-*-secrets.yaml
