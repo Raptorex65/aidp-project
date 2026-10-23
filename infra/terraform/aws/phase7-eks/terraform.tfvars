@@ -1,4 +1,4 @@
-cluster_version    = "1.29"
+cluster_version    = "1.36"
 node_instance_type = "t3.medium"
 
 node_desired_size = 2

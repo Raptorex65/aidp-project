@@ -1,7 +1,7 @@
 variable "cluster_version" {
   description = "EKS kub8s version"
   type        = string
-  default     = "1.29"
+  default     = "1.36"
 }
 
 variable "node_instance_type" {

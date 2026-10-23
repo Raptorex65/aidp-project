@@ -2,7 +2,7 @@ namespace: aidp
 
 global:
   environment: prod
-  storageClass: gp2
+  storageClass: gp3
   imageTag: latest
 
 modelApi:
