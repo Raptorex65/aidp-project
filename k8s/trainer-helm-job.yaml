@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: aidp-trainer
-  namespace: aidp-helm
+  namespace: aidp
 spec:
   backoffLimit: 2
   template:
@@ -10,7 +10,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: trainer
-          image: ghcr.io/raptorex65/aidp-trainer:f64dede
+          image: ghcr.io/raptorex65/aidp-trainer:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: MLFLOW_TRACKING_URI
