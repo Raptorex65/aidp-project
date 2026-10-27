@@ -29,8 +29,17 @@ phases:
     - aws eks list-clusters --region "$AWS_REGION"
     - aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
     - echo "Checking cluster connectivity..."
-    - kubectl get nodes
-    - echo "Using IMAGE_TAG=$IMAGE_TAG"
+    - kubectl get deployments -n "$K8S_NAMESPACE"
+    - 'test -n "$IMAGE_TAG" || { echo "ERROR: IMAGE_TAG is missing"; exit 1; }'
+    - echo "Deploying image_tag $IMAGE_TAG"
+    - |
+      aws secretsmanager get-secret-value \
+        --region "$AWS_REGION" \
+        --secret-id "aidp/eks/helm-values" \
+        --query SecretString \
+        --output text > /tmp/aidp-helm-secrets.yaml
+    - 'test -s /tmp/aidp-helm-secrets.yaml || { echo "ERROR: Helm secrets file is empty"; exit 1; }'
+    - chmod 600 /tmp/aidp-helm-secrets.yaml
 
   build:
     commands:
@@ -40,6 +49,7 @@ phases:
           --namespace "$K8S_NAMESPACE" \
           -f "$BASE_VALUES_FILE" \
           -f "$ENV_VALUES_FILE" \
+          -f /tmp/aidp-helm-secrets.yaml \
           --set modelApi.image.tag="$IMAGE_TAG" \
           --set mlflow.image.tag="$IMAGE_TAG" | grep image:
       - echo "Deploying Helm release to EKS..."
@@ -48,6 +58,7 @@ phases:
           --namespace "$K8S_NAMESPACE" \
           -f "$BASE_VALUES_FILE" \
           -f "$ENV_VALUES_FILE" \
+          -f /tmp/aidp-helm-secrets.yaml \
           --set modelApi.image.tag="$IMAGE_TAG" \
           --set mlflow.image.tag="$IMAGE_TAG"
 
@@ -60,7 +71,3 @@ phases:
       - echo "Checking deployed image..."
       - kubectl get deployment model-api -n "$K8S_NAMESPACE" -o jsonpath="{.spec.template.spec.containers[0].image}"
       - echo "pods svc ingress deployment validated"
-
-artifacts:
-  files:
-    - '**/*'
