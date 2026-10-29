@@ -10,6 +10,7 @@ on:
       - "apps/trainer/**"
       - ".github/workflows/ci.yaml"
       - "charts/aidp/**"
+      - "pipelines/**"
   pull_request:
     branches:
       - main
@@ -19,6 +20,7 @@ on:
       - "apps/trainer/**"
       - ".github/workflows/ci.yaml"
       - "charts/aidp/**"
+      - "pipelines/**"
   workflow_dispatch:
 
 permissions:
