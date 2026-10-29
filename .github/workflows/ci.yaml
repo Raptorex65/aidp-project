@@ -105,6 +105,14 @@ jobs:
               docker push ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.image }}:${{ steps.meta.outputs.short_sha }}
               docker push ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/${{ matrix.image }}:latest
 
+  trigger-aws-cd:
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
   # trigger-azure-devops:
   #   runs-on: ubuntu-latest
   #   needs: build-and-push
