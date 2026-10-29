@@ -66,8 +66,9 @@ phases:
     commands:
       - echo "Verifying deployment..."
       - kubectl rollout status deployment/model-api -n "$K8S_NAMESPACE" --timeout=180s
+      - kubectl rollout status deployment/mlflow -n "$K8S_NAMESPACE" --timeout=180s
       - kubectl get pods -n "$K8S_NAMESPACE"
       - kubectl get svc -n "$K8S_NAMESPACE"
       - echo "Checking deployed image..."
       - kubectl get deployment model-api -n "$K8S_NAMESPACE" -o jsonpath="{.spec.template.spec.containers[0].image}"
-      - echo "pods svc ingress deployment validated"
+      - echo "pods svc deployment validated"
