@@ -113,6 +113,26 @@ jobs:
       id-token: write
       contents: read
 
+    steps:
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::075897120159:role/aidp-github-actions-codepipeline-role
+          aws-region: eu-west-1
+
+      - name: Trigger AWS CodePipeline
+        env:
+          FULL_SHA: ${{ github.sha }}
+        run: |
+          IMAGE_TAG="${FULL_SHA:0:7}"
+          echo "Triggering AWS CD with image tag: $IMAGE_TAG"
+
+          aws codepipeline start-pipeline-execution \
+            --name aidp-eks-cd-pipeline \
+            --region eu-west-1 \
+            --source-revisions actionName=Source,revisionType=COMMIT_ID,revisionValue="$FULL_SHA" \
+            --variables name=IMAGE_TAG,value="$IMAGE_TAG"
+
   # trigger-azure-devops:
   #   runs-on: ubuntu-latest
   #   needs: build-and-push
